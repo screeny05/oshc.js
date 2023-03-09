@@ -1,0 +1,86 @@
+.stage-main-menu__richard {
+  position: absolute;
+  right: 112px;
+  top: 105px;
+}
+
+.stage-main-menu__button-tutorial {
+  position: absolute;
+  bottom: 95px;
+  right: 217px;
+}
+
+.stage-main-menu__button-exit {
+  position: absolute;
+  bottom: 106px;
+  left: 133px;
+}
+
+.stage-main-menu__button-options {
+  position: absolute;
+  bottom: 95px;
+  right: 363px;
+}
+
+.stage-main-menu__button-credits {
+  position: absolute;
+  bottom: 102px;
+  right: 112px;
+}
+
+.main-button {
+  position: absolute;
+  left: 253px;
+  padding: 13px 0 0 30px;
+}
+
+.main-button__hover-element {
+  display: none;
+  z-index: 1;
+  position: absolute;
+  top: -29px;
+  left: -84px;
+  pointer-events: none;
+}
+
+.stage-main-menu__info-text {
+  position: absolute;
+  left: 256px;
+  right: 413px;
+  top: 560px;
+  bottom: 97px;
+  padding: 10px;
+}
+
+.main-button:hover .main-button__hover-element {
+  display: block;
+}
+
+.main-button__text {
+  filter: drop-shadow(1px 1px 1px #000);
+  color: #f1e7ce;
+}
+
+.main-button:hover .main-button__text {
+  color: #f4eed2;
+}
+
+.stage-main-menu__button-menu--1 {
+  top: 199px;
+}
+
+.stage-main-menu__button-menu--2 {
+  top: 270px;
+}
+
+.stage-main-menu__button-menu--3 {
+  top: 340px;
+}
+
+.stage-main-menu__button-menu--4 {
+  top: 410px;
+}
+
+.stage-main-menu__button-menu--5 {
+  top: 478px;
+}

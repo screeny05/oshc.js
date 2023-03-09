@@ -1,0 +1,16 @@
+.spritesheet-debugger {
+  width: 100%;
+  overflow: auto;
+  background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2"%3E%3Cpath d="M1 2V0h1v1H0v1z" fill-opacity=".05"/%3E%3C/svg%3E');
+  background-size: 16px 16px;
+  background-color: #f2f2f2;
+  color: #000;
+  pointer-events: all;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.spritesheet-debugger__table {
+  border-collapse: collapse;
+}

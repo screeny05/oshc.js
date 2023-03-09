@@ -1,0 +1,12 @@
+.dialog-header {
+  display: flex;
+  padding: 10px 4px;
+}
+
+.dialog-header__ornament-left {
+  margin-right: auto;
+}
+
+.dialog-header__ornament-right {
+  margin-left: auto;
+}

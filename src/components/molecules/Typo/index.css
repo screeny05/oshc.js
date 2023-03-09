@@ -1,0 +1,24 @@
+.typo {
+  display: flex;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.typo__char--ornamented {
+  margin: 0 5px 0 3px;
+}
+
+.typo__word {
+  display: flex;
+  column-gap: var(--letterSpacing);
+  height: var(--lineHeight);
+}
+
+.typo__ornament {
+  position: absolute;
+  top: -3px;
+}
+
+.typo--aaMedium .typo__ornament {
+  top: -4px;
+}

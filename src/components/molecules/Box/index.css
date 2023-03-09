@@ -1,0 +1,21 @@
+.box {
+  position: relative;
+}
+
+.box--red-big,
+.box--gold-big {
+  border: 24px solid;
+}
+
+.box--red-small {
+  border: 8px solid;
+}
+
+.box__content {
+  position: relative;
+  margin: -16px;
+}
+
+.box--red-small .box__content {
+  margin: -7px;
+}

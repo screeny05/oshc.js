@@ -1,0 +1,25 @@
+.stage-game {
+  pointer-events: all;
+}
+
+.bottom-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: end;
+}
+
+.bottom-bar__left {
+  flex: 1 0 0;
+  background: url('/orgx/gfx/edge1280l.png') top right;
+  height: 128px;
+}
+
+.bottom-bar__right {
+  flex: 1 0 0;
+  background: url('/orgx/gfx/edge1280r.png') no-repeat,
+    url('/orgx/gfx/edge1280l.png') bottom left repeat-x;
+  height: 200px;
+}
