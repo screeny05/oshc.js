@@ -1,12 +1,16 @@
 import React, { useRef } from 'react';
+import { BrowserFrontend } from '../../../game/browser-frontend';
 import { Engine } from '../../../game/engine';
 import ClickableSprite from '../../atoms/ClickableSprite';
 import Spritesheet from '../../atoms/Spritesheet';
 import { StageProps } from '../../game-ui';
+import SpritesheetDebugger from '../../molecules/SpritesheetDebugger';
 import './index.css';
 
 export default function StageGame(props: StageProps) {
-  const engineRef = useRef<Engine | null>(null);
+  const frontendRef = useRef<BrowserFrontend | null>(null);
+
+  //return <SpritesheetDebugger spritesheet="icons_placeholders" />;
 
   return (
     <div className="stage-game">
@@ -15,8 +19,10 @@ export default function StageGame(props: StageProps) {
         className="stage-game__game"
         ref={(canvas) => {
           if (canvas) {
-            engineRef.current = new Engine(canvas);
-            engineRef.current.load().then(() => engineRef.current?.init());
+            BrowserFrontend.load().then(() => {
+              frontendRef.current = new BrowserFrontend(canvas);
+              frontendRef.current.render();
+            });
           }
         }}
       />
@@ -24,9 +30,24 @@ export default function StageGame(props: StageProps) {
       <div className="stage-game__hud hud">
         <div className="hud__bottom-bar bottom-bar">
           <div className="bottom-bar__left"></div>
-          <div className="bottom-bar__menu">
-            <Spritesheet spritesheet="interface_buttons" index={6} />
-          </div>
+          <Spritesheet
+            className="bottom-bar__menu"
+            spritesheet="interface_buttons"
+            index={6}
+          >
+            <ClickableSprite
+              spritesheet="icons_placeholders"
+              index={16}
+              hoverIndex={17}
+              onClick={() => frontendRef.current?.setMouseAction('place')}
+            />
+            <ClickableSprite
+              spritesheet="icons_placeholders"
+              index={18}
+              hoverIndex={19}
+              onClick={() => frontendRef.current?.setMouseAction('moveTo')}
+            />
+          </Spritesheet>
           <div className="bottom-bar__actions-banner">
             <ClickableSprite
               spritesheet="interface_buttons"

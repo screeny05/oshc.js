@@ -5,6 +5,7 @@ import SpritesheetDebugger from './molecules/SpritesheetDebugger';
 import StageGame from './stages/Game';
 import StageMainMenu from './stages/MainMenu';
 import StageOptionsMain from './stages/Options';
+import { AnimationDebugger } from './molecules/AnimationDebugger/index';
 
 export interface StageProps {
   onNavigate: (stage: StageType, props?: any) => void;
@@ -25,7 +26,8 @@ export default function GameUi() {
   return (
     <div className="game-ui">
       <Cursor />
-      {/*<SpritesheetDebugger spritesheet="tile_data" />*/}
+      {/*<AnimationDebugger spritesheet="body/body_arab_grenadier" />*/}
+      {/*<SpritesheetDebugger spritesheet="body/body_arab_grenadier" />*/}
       <StageElement onNavigate={(stage, props) => setStage(stage)} />
     </div>
   );

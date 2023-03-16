@@ -23,3 +23,10 @@
     url('/orgx/gfx/edge1280l.png') bottom left repeat-x;
   height: 200px;
 }
+
+.bottom-bar__menu {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  gap: 20px;
+}

@@ -1,6 +1,6 @@
 import { Spritesheet, Texture } from 'pixi.js';
-import loadSpritesheetData from '../sprites/data-loader';
-import { spritesheetDataToPixi } from '../sprites/data-to-pixi';
+import loadSpritesheetData from '../../sprites/data-loader';
+import { spritesheetDataToPixi } from '../../sprites/data-to-pixi';
 
 class Loader {
   textures: Record<string, Texture> = {};

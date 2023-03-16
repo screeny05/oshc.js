@@ -6,17 +6,19 @@ import './index.css';
 
 interface SpritesheetDebuggerProps {
   spritesheet: string;
+  className?: string;
 }
 
 export default function SpritesheetDebugger({
   spritesheet,
+  className = '',
 }: SpritesheetDebuggerProps) {
   const spriteData = useIndexFile(spritesheet);
   const chunkSize = 16;
   const chunkedSprites = spriteData ? chunk(spriteData, chunkSize) : [];
 
   return (
-    <div className="spritesheet-debugger">
+    <div className={`spritesheet-debugger ${className}`}>
       <table className="spritesheet-debugger__table">
         <thead>
           <tr>

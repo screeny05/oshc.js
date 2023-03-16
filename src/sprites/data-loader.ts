@@ -31,13 +31,19 @@ export function getCachedSpritesheetData(
   return indexCacheLoaded.get(spritesheet);
 }
 
-export const useIndexFile = (spritesheet: string) => {
+export const useIndexFile = (
+  spritesheet: string,
+  callback?: (data: IndexFileEntry[]) => void
+) => {
   const [indexEntries, setIndexEntries] = useState(
     getCachedSpritesheetData(spritesheet)
   );
 
   useEffect(() => {
-    loadSpritesheetData(spritesheet).then((data) => setIndexEntries(data));
+    loadSpritesheetData(spritesheet).then((data) => {
+      setIndexEntries(data);
+      callback?.(data);
+    });
   }, [spritesheet]);
   return indexEntries;
 };

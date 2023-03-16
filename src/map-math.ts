@@ -9,6 +9,13 @@ export class MapMath {
     this.count = this.calculateTileCount(size);
   }
 
+  isPositionNull(x: number, y: number): boolean {
+    const columnsInRow = this.getColumnsInRow(y);
+    const firstColumn = (this.size - columnsInRow) / 2;
+    const lastColumn = (this.size + columnsInRow) / 2 - 1;
+    return x < firstColumn || x > lastColumn;
+  }
+
   calculateTileCount(size: number): number {
     // Scientifically proven!
     const remainder = size % 2;
@@ -23,28 +30,14 @@ export class MapMath {
   }
 
   getPositionByIndex(index: number): VecIso {
-    let previousTiles = 0;
-    for (let row = 0; row < this.count + 1; row++) {
-      const columnsInRow = this.getColumnsInRow(row);
-
-      if (previousTiles + columnsInRow > index) {
-        const firstColumnInRow = this.getFirstColumnInRow(row);
-
-        return {
-          i: row,
-          j: firstColumnInRow + index - previousTiles,
-        };
-      }
-
-      previousTiles += columnsInRow;
-    }
-    throw new Error(`Given index ${index} is out of bounds.`);
+    return {
+      i: index % this.size,
+      j: Math.floor(index / this.size),
+    };
   }
 
   getIndexByPosition(x: number, y: number): number {
-    const firstIndex = this.getIndexForFirstTileInRow(y);
-    const firstColumnInRow = this.getFirstColumnInRow(y);
-    return firstIndex + x - firstColumnInRow;
+    return y * this.size + x;
   }
 
   getFirstColumnInRow(cRow: number) {
