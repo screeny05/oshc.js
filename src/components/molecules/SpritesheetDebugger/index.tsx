@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useIndexFile } from '../../../sprites/data-loader';
+import { useGm1File } from '../../../sprites/data-loader';
 import { chunk } from '../../../utils/chunk';
 import Spritesheet from '../../atoms/Spritesheet';
 import './index.css';
@@ -13,9 +13,9 @@ export default function SpritesheetDebugger({
   spritesheet,
   className = '',
 }: SpritesheetDebuggerProps) {
-  const spriteData = useIndexFile(spritesheet);
+  const spriteData = useGm1File(spritesheet);
   const chunkSize = 16;
-  const chunkedSprites = spriteData ? chunk(spriteData, chunkSize) : [];
+  const chunkedSprites = spriteData ? chunk(spriteData.images, chunkSize) : [];
 
   return (
     <div className={`spritesheet-debugger ${className}`}>

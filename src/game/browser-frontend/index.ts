@@ -1,11 +1,6 @@
 import { addComponent } from 'bitecs';
-import {
-  Engine,
-  Movable,
-  PathFindingTarget,
-  Position,
-  Renderable,
-} from '../engine';
+import { bodyCollection } from '../../data/body';
+import { RenderableBody, Engine, Movable, PathFindingTarget, Position, Renderable } from '../engine';
 import { BrowserFrontendMath } from './math';
 import { Renderer } from './renderer';
 
@@ -18,7 +13,7 @@ export class BrowserFrontend {
 
   constructor(private readonly canvas: HTMLCanvasElement) {
     this.renderer = new Renderer(this.canvas);
-    this.engine = new Engine(this.renderer.createRenderSystem());
+    this.engine = new Engine(this.renderer.createRenderSystems());
   }
 
   public static async load(): Promise<void> {
@@ -37,10 +32,13 @@ export class BrowserFrontend {
       const snapped = BrowserFrontendMath.snapMapPosition(iso);
 
       if (this.eid === undefined && this.currentAction?.[0] === 'place') {
-        this.eid = this.engine.newEntity([Position, Movable, Renderable]);
-        Movable.speed[this.eid] = 2;
+        this.eid = this.engine.newEntity([Position, Movable, Renderable, RenderableBody]);
+        const bodyIndex = 0;
+        const body = bodyCollection[bodyIndex];
+        Movable.speed[this.eid] = body.movementSpeed;
         Renderable.frame[this.eid] = 0;
         Renderable.index[this.eid] = 10;
+        RenderableBody.bodyIndex[this.eid] = bodyIndex;
       }
 
       if (this.eid !== undefined && this.currentAction?.[0] === 'place') {

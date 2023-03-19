@@ -51,6 +51,6 @@ export const extractSpriteFromSheet = async (
   index: number,
   upscale: boolean = false
 ): Promise<string> => {
-  const data = await loadSpritesheetData(spritesheet);
-  return modifySprite(spritesheet, data[index], () => {}, upscale);
+  const gm1 = await loadSpritesheetData(spritesheet);
+  return modifySprite(spritesheet, gm1.images[index], () => {}, upscale);
 };

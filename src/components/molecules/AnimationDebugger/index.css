@@ -11,12 +11,39 @@
   z-index: 1;
 }
 
+.animation-debugger__player-container {
+  position: relative;
+  min-height: var(--spriteMaxHeight);
+}
+
 .animation-debugger__player {
   position: absolute;
-  bottom: calc(100% - var(--spriteHeight));
+  left: calc(var(--centerX) * -1 + 40px);
+  top: calc(var(--spriteMaxHeight) - var(--centerY));
+  top: calc(var(--centerY) * -1);
+  z-index: 10;
 }
 
 .animation-debugger__spritesheet {
-  top: calc(var(--spriteHeight) + 100px);
+  top: calc(var(--spriteMaxHeight) + 100px);
   bottom: 0;
+}
+
+.animation-debugger__play-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 800px;
+}
+
+.play-bar__play-toggle {
+  width: 60px;
+}
+
+.play-bar__position {
+  min-width: 60px;
+}
+
+.play-bar__progress {
+  flex: 1 0 auto;
 }

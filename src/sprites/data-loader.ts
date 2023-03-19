@@ -1,12 +1,12 @@
-import parseDataFile, { IndexFileEntry } from './data-parser';
+import parseDataFile, { Gm1 } from './data-parser';
 import { useEffect, useState } from 'react';
 
-const indexCacheLoading: Map<string, Promise<IndexFileEntry[]>> = new Map();
-const indexCacheLoaded: Map<string, IndexFileEntry[]> = new Map();
+const indexCacheLoading: Map<string, Promise<Gm1>> = new Map();
+const indexCacheLoaded: Map<string, Gm1> = new Map();
 
 export default async function loadSpritesheetData(
   spritesheet: string
-): Promise<IndexFileEntry[]> {
+): Promise<Gm1> {
   const cached = indexCacheLoading.get(spritesheet);
   if (cached) {
     return cached;
@@ -25,15 +25,13 @@ export default async function loadSpritesheetData(
   return fetched;
 }
 
-export function getCachedSpritesheetData(
-  spritesheet: string
-): IndexFileEntry[] | undefined {
+export function getCachedSpritesheetData(spritesheet: string): Gm1 | undefined {
   return indexCacheLoaded.get(spritesheet);
 }
 
-export const useIndexFile = (
+export const useGm1File = (
   spritesheet: string,
-  callback?: (data: IndexFileEntry[]) => void
+  callback?: (data: Gm1) => void
 ) => {
   const [indexEntries, setIndexEntries] = useState(
     getCachedSpritesheetData(spritesheet)

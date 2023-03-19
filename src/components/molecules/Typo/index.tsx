@@ -1,5 +1,5 @@
 import React from 'react';
-import { useIndexFile } from '../../../sprites/data-loader';
+import { useGm1File } from '../../../sprites/data-loader';
 import Spritesheet from '../../atoms/Spritesheet';
 import './index.css';
 
@@ -173,8 +173,8 @@ export default function Typo({
 }: TypoProps) {
   font ??= 'aaLarge';
   const fontMap = FONT_MAPS[font] ?? FONT_MAPS.aaLarge;
-  const spritesheetData = useIndexFile(fontMap.spritesheet);
-  const emHeight = spritesheetData?.[fontMap.character.M.index].h ?? 10;
+  const gm1 = useGm1File(fontMap.spritesheet);
+  const emHeight = gm1?.images[fontMap.character.M.index].h ?? 10;
   value = test
     ? FONT_AA_CHARACTERS // 'AÀÁÂÃÄÅÆCÇÈÉÊËEIÌÍÎÏDÐNÑOÒÓÔÕÖØUÙÚÛÜYÝÞßBCDEFGHIJKLMNOPQRSTUVWXYZAĄCĆEĘLŁNŃSŚZŹŻaàáâãäåæcçeèéêëiìíîïðnñoòóôõöøuùúûüyýÿþaącćeęlłnńsśzźż{|}~�¿¡'
     : value;

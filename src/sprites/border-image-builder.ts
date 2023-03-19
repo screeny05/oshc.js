@@ -118,15 +118,16 @@ export async function buildBorderImage(
   spritesheet: string,
   map: TextureMap
 ): Promise<BorderImage> {
-  const data = await loadSpritesheetData(spritesheet);
+  const gm1 = await loadSpritesheetData(spritesheet);
+  const sprites = gm1.images;
   const img = await loadImage(`/orgx/gm/${spritesheet}.png`);
 
-  const borderImage = drawBorderImage(img, data, map);
+  const borderImage = drawBorderImage(img, sprites, map);
 
   const maskMap = textureMapToMaskMap(map);
 
   if (maskMap) {
-    const maskImage = drawBorderImage(img, data, maskMap);
+    const maskImage = drawBorderImage(img, sprites, maskMap);
     const ctx = borderImage.getContext('2d');
     if (!ctx) {
       throw new Error('Could not acquire context2d.');
@@ -141,8 +142,8 @@ export async function buildBorderImage(
 
   return {
     url: URL.createObjectURL(blob),
-    slice: `${data[map.nw].h} ${data[map.ne].w} ${data[map.sw].h} ${
-      data[map.sw].w
+    slice: `${sprites[map.nw].h} ${sprites[map.ne].w} ${sprites[map.sw].h} ${
+      sprites[map.sw].w
     } fill`,
   };
 }

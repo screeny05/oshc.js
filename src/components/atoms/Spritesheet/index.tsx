@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import parseDataFile, { IndexFileEntry } from '../../../sprites/data-parser';
-import loadSpritesheetData, {
+import { IndexFileEntry } from '../../../sprites/data-parser';
+import {
   getCachedSpritesheetData,
-  useIndexFile,
+  useGm1File,
 } from '../../../sprites/data-loader';
 import { modifySprite } from '../../../sprites/modify-sprite';
+import './index.css';
 
 interface SpritesheetProps
   extends React.DetailedHTMLProps<
@@ -16,6 +17,7 @@ interface SpritesheetProps
   maskIndex?: number;
   maskColor?: 'magenta' | 'black';
   usesAA?: boolean;
+  className?: string;
 }
 
 const imageCache: Map<string, string> = new Map();
@@ -103,19 +105,17 @@ export default function Spritesheet({
   maskColor = 'black',
   usesAA,
   style,
+  className,
   ...props
 }: SpritesheetProps) {
   const filePrefix = `/orgx/gm/${spritesheet}`;
-  const indexEntries = useIndexFile(spritesheet);
-  const indexEntry = indexEntries?.[index ?? -1];
-  const maskIndexEntry = indexEntries?.[maskIndex ?? -1];
+  const gm1 = useGm1File(spritesheet);
+  const indexEntry = gm1?.images[index ?? -1];
+  const maskIndexEntry = gm1?.images[maskIndex ?? -1];
 
-  if (
-    indexEntries &&
-    ((index && !indexEntry) || (maskIndex && !maskIndexEntry))
-  ) {
+  if (gm1 && ((index && !indexEntry) || (maskIndex && !maskIndexEntry))) {
     console.warn(
-      `Spritesheet ${spritesheet} does not contain index ${index}. Index contains ${indexEntries.length} entries.`
+      `Spritesheet ${spritesheet} does not contain index ${index}. Index contains ${gm1.images.length} entries.`
     );
   }
 
@@ -140,15 +140,16 @@ export default function Spritesheet({
   if (antialiasedImage && indexEntry) {
     return (
       <div
-        style={{
-          ...style,
-          backgroundImage: `url('${antialiasedImage}')`,
-          backgroundRepeat: 'no-repeat',
-          maskImage: maskImage ? `url('${maskImage}')` : '',
-          width: indexEntry.w,
-          height: indexEntry.h,
-          imageRendering: 'pixelated',
-        }}
+        className={`spritesheet ${className ?? ''}`}
+        style={
+          {
+            ...style,
+            backgroundImage: `url('${antialiasedImage}')`,
+            maskImage: maskImage ? `url('${maskImage}')` : '',
+            width: indexEntry.w,
+            height: indexEntry.h,
+          } as any
+        }
         {...props}
       />
     );
@@ -156,21 +157,22 @@ export default function Spritesheet({
 
   return (
     <div
-      style={{
-        ...style,
-        ...(indexEntry
-          ? {
-              backgroundImage: `url('${filePrefix}.png')`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPositionX: -indexEntry.x,
-              backgroundPositionY: -indexEntry.y,
-            }
-          : {}),
-        maskImage: maskImage ? `url('${maskImage}')` : '',
-        width: maskIndexEntry ? maskIndexEntry.w : indexEntry!.w,
-        height: maskIndexEntry ? maskIndexEntry.h : indexEntry!.h,
-        imageRendering: 'pixelated',
-      }}
+      className={`spritesheet ${className ?? ''}`}
+      style={
+        {
+          ...style,
+          ...(indexEntry
+            ? {
+                backgroundImage: `url('${filePrefix}.png')`,
+                backgroundPositionX: -indexEntry.x,
+                backgroundPositionY: -indexEntry.y,
+              }
+            : {}),
+          maskImage: maskImage ? `url('${maskImage}')` : '',
+          width: maskIndexEntry ? maskIndexEntry.w : indexEntry!.w,
+          height: maskIndexEntry ? maskIndexEntry.h : indexEntry!.h,
+        } as any
+      }
       {...props}
     />
   );
