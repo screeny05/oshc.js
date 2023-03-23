@@ -6,10 +6,21 @@ import { GameMap } from '../../game-map';
 import { CompositeTilemap, settings } from '@pixi/tilemap';
 import { BrowserFrontendMath } from './math';
 import { defineQuery, defineSystem, enterQuery, exitQuery, System } from 'bitecs';
-import { RenderableBody, Position, Renderable, renderableQuery, World, MovementData, MovementDirection, Movable } from '../engine';
+import {
+  RenderableBody,
+  Position,
+  Renderable,
+  renderableQuery,
+  World,
+  MovementData,
+  MovementDirection,
+  Movable,
+  RenderableBuilding,
+} from '../engine';
 import { bodyCollection, Body } from '../../data/body';
 import { Gm1 } from '../../sprites/data-parser';
 import { AnimationDescriptor, AnimationSet, animationSetArabGrenadier } from '../../data/animation-set';
+import { buildingCollection } from '../../data/building';
 
 settings.use32bitIndex = true;
 
@@ -17,7 +28,7 @@ const TILE_WIDTH = 30;
 const TILE_HEIGHT = 16;
 const UI_BOTTOM_BAR_HEIGHT = 128;
 
-const DEBUG_ENTITY_POSITION = false;
+const DEBUG_ENTITY_POSITION = true;
 
 interface EntityRenderable {
   container: Container;
@@ -30,7 +41,8 @@ export class Renderer {
   private tileContainer: CompositeTilemap;
   private decalContainer: Container;
   private entityContainer: Container;
-  private viewport: Viewport;
+  public viewport: Viewport;
+  private selectionRectangle: Graphics;
 
   private mapOffsetX = 0;
   private mapOffsetY = 0;
@@ -64,11 +76,18 @@ export class Renderer {
     this.tileContainer.interactive = false;
     this.tileContainer.interactiveChildren = false;
 
+    this.entityContainer.sortableChildren = true;
+
     this.mapContainer.addChild(this.tileContainer);
     this.mapContainer.addChild(this.decalContainer);
     this.mapContainer.addChild(this.entityContainer);
     this.viewport.addChild(this.mapContainer);
     this.app.stage.addChild(this.viewport);
+
+    this.selectionRectangle = new Graphics();
+    this.selectionRectangle.beginFill(0xff0000);
+    this.selectionRectangle.drawRect(0, 0, 10, 10);
+    this.viewport.addChild(this.selectionRectangle);
   }
 
   public static async load(): Promise<void> {
@@ -76,6 +95,7 @@ export class Renderer {
     await loader.loadSpritesheet('tile_buildings1');
     await loader.loadSpritesheet('tile_buildings2');
     await loader.loadSpritesheet('body_arab_grenadier');
+    await loader.loadSpritesheet('tile_castle');
   }
 
   render(map: GameMap): void {
@@ -87,7 +107,6 @@ export class Renderer {
     });
 
     this.viewport
-      .drag()
       .mouseEdges({ distance: 20 })
       .clamp({
         underflow: 'center',
@@ -101,7 +120,44 @@ export class Renderer {
   }
 
   public createRenderSystems(): System<[], World>[] {
-    return [this.createSpriteRenderSystem(), this.createBodyRenderSystem()];
+    return [this.createSpriteRenderSystem(), this.createBodyRenderSystem(), this.createBuildingRenderSystem()];
+  }
+
+  private createBuildingRenderSystem(): System<[], World> {
+    const query = defineQuery([Renderable, RenderableBuilding]);
+    const queryEnter = enterQuery(query);
+
+    return defineSystem((world) => {
+      queryEnter(world).forEach((eid) => {
+        // TODO modify map walkable tiles
+        // TODO maybe have a non-walkable component?
+        // TODO Floodfill for closed areas
+        const renderable = this.renderablesByEid.get(eid);
+        const building = buildingCollection[RenderableBuilding.buildingIndex[eid]];
+        if (!renderable) {
+          return;
+        }
+        building.tiles.forEach((tile) => {
+          const sprite = new Sprite();
+          sprite.anchor.set(0.5, 0);
+          renderable.container.addChild(sprite);
+          sprite.texture = this.textures[tile.spriteN.spritesheet + tile.spriteN.index];
+          if (tile.offset) {
+            const offsetScreenSpace = BrowserFrontendMath.isoToCartesian(tile.offset);
+            console.log('offsetScreenSpace', offsetScreenSpace);
+            sprite.position.set(-offsetScreenSpace.x * TILE_WIDTH, offsetScreenSpace.y * TILE_HEIGHT);
+          }
+        });
+      });
+
+      query(world).forEach((eid) => {
+        const renderable = this.renderablesByEid.get(eid);
+        const container = renderable?.container;
+        const sprite = container?.children[0] as Sprite;
+        const building = buildingCollection[RenderableBuilding.buildingIndex[eid]];
+      });
+      return world;
+    });
   }
 
   private createBodyRenderSystem(): System<[], World> {
@@ -112,7 +168,6 @@ export class Renderer {
       const endFrame = animation.offset + (animation.frames - 1) * animation.increment;
       const nextFrame = currentFrame + animation.increment;
       const isInCurrentAnimationStep = (nextFrame - animation.offset) % animation.increment === 0;
-      console.log(animation.offset, currentFrame, nextFrame, endFrame);
       if (nextFrame > endFrame || nextFrame < animation.offset || !isInCurrentAnimationStep) {
         return animation.offset;
       }
@@ -154,6 +209,13 @@ export class Renderer {
         const currentFrame = body.frames.idle.offset;
         RenderableBody.currentFrame[eid] = currentFrame;
         RenderableBody.lastFrameTime[eid] = world.time.elapsed;
+        const renderable = this.renderablesByEid.get(eid);
+        if (!renderable) {
+          return;
+        }
+        const sprite = new Sprite();
+        sprite.anchor.set(0.5, 0);
+        renderable.container.addChild(sprite);
       });
 
       query(world).forEach((eid) => {
@@ -177,6 +239,11 @@ export class Renderer {
 
         if (currentTime > lastFrameTime + timePerFrame) {
           const nextFrame = getNextFrame(currentFrame, currentAnimation);
+          console.log('frame', currentFrame, nextFrame, currentTime - lastFrameTime, timePerFrame);
+          if (nextFrame === currentFrame) {
+            return;
+          }
+
           const frameOffset = frameOffsets?.[nextFrame];
           sprite.texture = this.textures[body.spritesheet + nextFrame];
 
@@ -188,7 +255,6 @@ export class Renderer {
             const x = sprite.texture.width * 0.5 - frameOffset.centerX;
             const y = -frameOffset.centerY - TILE_HEIGHT * 0.5;
             //sprite.anchor.set(0.5, 1);
-            console.log({ x, y });
             sprite.position.set(x, y);
           }
         }
@@ -207,8 +273,10 @@ export class Renderer {
       }
       const gra = new Graphics();
       gra.beginFill(0xff00ff);
-      gra.lineStyle(1, 0xff0000);
       gra.drawRect(0, 0, 1, 1);
+      gra.position.set(0, 0);
+      gra.zIndex = 1000;
+      container.sortableChildren = true;
       container.addChild(gra);
     };
 
@@ -216,9 +284,6 @@ export class Renderer {
       const entitiesEntered = queryEnter(world);
       entitiesEntered.forEach((eid) => {
         const container = new Container();
-        const sprite = new Sprite();
-        sprite.anchor.set(0.5, 0);
-        container.addChild(sprite);
         this.renderablesByEid.set(eid, { container });
         this.entityContainer.addChild(container);
         addDebugRectangle(container);
@@ -256,6 +321,10 @@ export class Renderer {
     this.viewport.position.set(Math.floor(this.viewport.x), Math.floor(this.viewport.y));
   }
 
+  public screenPositionToSpritePosition(pos: Vec2): Vec2 {
+    return this.viewport.toWorld(pos.x, pos.y);
+  }
+
   public screenPositionToMapPosition(pos: Vec2): VecIso {
     const worldPos = this.viewport.toWorld(pos.x, pos.y);
     return BrowserFrontendMath.cartesianToIso({
@@ -272,6 +341,17 @@ export class Renderer {
     };
   }
 
+  public showSelectionRectangle(a: Vec2, b: Vec2): void {
+    this.selectionRectangle.alpha = 1;
+    this.selectionRectangle.position.set(a.x, a.y);
+    this.selectionRectangle.width = b.x - a.x;
+    this.selectionRectangle.height = b.y - a.y;
+  }
+
+  public hideSelectionRectangle(): void {
+    this.selectionRectangle.alpha = 0;
+  }
+
   placeTile(mapPos: VecIso, spritesheet: string, index: number): void {
     const texture = this.textures[spritesheet + index];
     const tileOffsetX = TILE_WIDTH / 2;
@@ -285,7 +365,9 @@ export class Renderer {
     const containerOffsetY = -TILE_HEIGHT;
     const containerOffsetX = 0;
     const screenPos = this.isoToScreenPosition(mapPos, containerOffsetX, containerOffsetY);
+    const zIndex = mapPos.i + mapPos.j;
 
+    container.zIndex = zIndex;
     container.position.set(screenPos.x, screenPos.y);
   }
 }

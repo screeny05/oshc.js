@@ -1,9 +1,3 @@
-import {
-  Grid,
-  I_NavigatorTile,
-  Navigator,
-  NavigatorTile,
-} from 'pulsar-pathfinding';
 import { VecIso } from './game/types';
 import { MapMath } from './map-math';
 
@@ -24,14 +18,14 @@ export class GameMap {
   public readonly decals: Uint16Array;
   public readonly buildings: Building[] = [];
   public readonly entities: Entity[] = [];
-  public readonly grid: Grid;
+  public readonly collisionMap: number[][];
   readonly math: MapMath;
 
   constructor(public readonly size: number) {
     this.math = new MapMath(this.size);
     this.tiles = new Uint16Array(size * size);
     this.decals = new Uint16Array(size * size);
-    this.grid = new Grid({ width: size, height: size });
+    this.collisionMap = Array.from({ length: this.size });
 
     this.tiles.forEach((_, i) => {
       // TODO: Probably not the most efficient
@@ -39,21 +33,22 @@ export class GameMap {
       const isNull = this.math.isPositionNull(pos.i, pos.j);
 
       this.tiles[i] = isNull ? TILE_NULL : Math.floor(Math.random() * 12);
-
-      if (isNull) {
-        this.grid.obstacles.add(this.grid.getTile({ x: pos.i, y: pos.j })!);
-      }
-
-      if (this.tiles[i] < 3) {
-        this.tiles[i] = 20;
-        this.grid.obstacles.add(this.grid.getTile({ x: pos.i, y: pos.j })!);
-      }
     });
+
+    // Generate collision map
+    for (let j = 0; j < this.size; j++) {
+      for (let i = 0; i < this.size; i++) {
+        if (j === 0) {
+          this.collisionMap[i] = Array.from({ length: this.size });
+        }
+        const tile = this.tiles[this.math.getIndexByPosition(j, i)];
+        const costs = tile === TILE_NULL ? TILE_NULL : tile === 12 ? 0 : 0;
+        this.collisionMap[i][j] = costs;
+      }
+    }
   }
 
-  forEachTile(
-    fn: (tile: TileType, vecIso: VecIso, index: number) => void
-  ): void {
+  forEachTile(fn: (tile: TileType, vecIso: VecIso, index: number) => void): void {
     this.tiles.forEach((tile, i) => {
       if (tile === TILE_NULL) {
         return;
@@ -71,20 +66,9 @@ export class GameMap {
     return this.tiles[i];
   }
 
-  getPath(start: VecIso, end: VecIso): Promise<I_NavigatorTile[]> {
-    const startTile = this.grid.getTile({ x: start.i, y: start.j });
-    const endTile = this.grid.getTile({ x: end.i, y: end.j });
-    if (!startTile || !endTile) {
-      throw new Error('Invalid start or end');
-    }
+  to2dGrid(): number[][] {
+    const grid: number[][] = [];
 
-    return new Promise((resolve) => {
-      new Navigator({
-        grid: this.grid,
-        begin: startTile,
-        end: endTile,
-        onComplete: resolve,
-      }).start();
-    });
+    return grid;
   }
 }

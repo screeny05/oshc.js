@@ -19,7 +19,9 @@ export interface Body {
   type: string;
   spritesheet: string;
   frames: BodyFrames;
+  /** In tiles/second */
   movementSpeed: number;
+  health: number;
 }
 
 export const bodyCollection: Record<number, Body> = {
@@ -28,5 +30,6 @@ export const bodyCollection: Record<number, Body> = {
     spritesheet: 'body_arab_grenadier',
     frames: animationSetArabGrenadier,
     movementSpeed: 2.5,
+    health: 2,
   },
 };

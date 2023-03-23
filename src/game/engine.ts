@@ -13,9 +13,23 @@ import {
   System,
   Types,
 } from 'bitecs';
-import { I_NavigatorTile, Vector } from 'pulsar-pathfinding';
 import { GameMap } from '../game-map';
-import I_Vector from 'pulsar-pathfinding/src/common/Vector/I_Vector';
+import { createPathFindingSystem } from './systems/path-finding.system';
+import { glMatrix } from 'gl-matrix';
+import { Vec2, VecIso as VecIsoType } from './types';
+
+glMatrix.setMatrixArrayType(Array);
+
+export interface GoodsCollection {
+  wood: number;
+  stone: number;
+  iron: number;
+  gold: number;
+}
+
+export interface PlayerData {
+  goods: GoodsCollection;
+}
 
 export interface World extends IWorld {
   time: {
@@ -24,6 +38,8 @@ export interface World extends IWorld {
     elapsed: number;
     then: number;
   };
+  playerData: Record<number, PlayerData>;
+  alliances: number[][];
   gameSpeed: number;
   map: GameMap;
 }
@@ -44,29 +60,29 @@ export enum MovementDirection {
   nw,
 }
 
-export const vectorToDirectionEnum = (vec: I_Vector): MovementDirection => {
-  if (vec.x === 0 && vec.y < 0) {
+export const vectorToDirectionEnum = (vec: VecIsoType): MovementDirection => {
+  if (vec.i === 0 && vec.j < 0) {
     return MovementDirection.n;
   }
-  if (vec.x === 0 && vec.y > 0) {
+  if (vec.i === 0 && vec.j > 0) {
     return MovementDirection.s;
   }
-  if (vec.x < 0 && vec.y === 0) {
+  if (vec.i < 0 && vec.j === 0) {
     return MovementDirection.w;
   }
-  if (vec.x > 0 && vec.y === 0) {
+  if (vec.i > 0 && vec.j === 0) {
     return MovementDirection.e;
   }
-  if (vec.x < 0 && vec.y < 0) {
+  if (vec.i < 0 && vec.j < 0) {
     return MovementDirection.nw;
   }
-  if (vec.x > 0 && vec.y < 0) {
+  if (vec.i > 0 && vec.j < 0) {
     return MovementDirection.ne;
   }
-  if (vec.x < 0 && vec.y > 0) {
+  if (vec.i < 0 && vec.j > 0) {
     return MovementDirection.sw;
   }
-  if (vec.x > 0 && vec.y > 0) {
+  if (vec.i > 0 && vec.j > 0) {
     return MovementDirection.se;
   }
   return MovementDirection.none;
@@ -74,20 +90,22 @@ export const vectorToDirectionEnum = (vec: I_Vector): MovementDirection => {
 
 export const VecIso = { i: Types.f32, j: Types.f32 };
 export const MovementData = { speed: Types.f32, direction: Types.ui8 };
-export const RenderableData = { index: Types.ui16, frame: Types.ui16 };
 
-export const Renderable = defineComponent(RenderableData);
+export const Renderable = defineComponent();
 export const Movable = defineComponent(MovementData);
 export const Position = defineComponent(VecIso);
 export const PathFindingTarget = defineComponent(VecIso);
 export const PathFindingPath = defineComponent({ currentIndex: Types.ui32 });
 export const Health = defineComponent({ health: Types.f32 });
-export const PlayerOwned = defineComponent({ player: Types.ui8 });
+export const Owner = defineComponent({ player: Types.ui8 });
 export const RenderableBody = defineComponent({
   bodyIndex: Types.ui32,
   currentFrame: Types.ui32,
-  lastFrameTime: Types.ui16,
+  lastFrameTime: Types.ui32,
 });
+export const RenderableBuilding = defineComponent({ buildingIndex: Types.ui32 });
+export const SelectableGroupable = defineComponent();
+export const SelectableSingle = defineComponent();
 
 export const renderableQuery = defineQuery([Renderable, Position]);
 
@@ -101,91 +119,13 @@ const timeSystem = defineSystem((world: World) => {
   return world;
 });
 
-const targetQuery = defineQuery([PathFindingTarget]);
-const movingQuery = defineQuery([Movable, PathFindingPath, Position]);
-
-const pathfindingCache: Map<number, I_NavigatorTile[]> = new Map();
-
-const pathFindingSystem = defineSystem((world: World) => {
-  const enterTargetEntities = enterQuery(targetQuery)(world);
-  enterTargetEntities.forEach((eid) => {
-    world.map
-      .getPath(
-        { i: Position.i[eid], j: Position.j[eid] },
-        {
-          i: PathFindingTarget.i[eid],
-          j: PathFindingTarget.j[eid],
-        }
-      )
-      .then((path) => {
-        addComponent(world, PathFindingPath, eid);
-        PathFindingPath.currentIndex[eid] = 0;
-        pathfindingCache.set(eid, path);
-      });
-  });
-
-  movingQuery(world).forEach((eid) => {
-    const path = pathfindingCache.get(eid);
-    const speed = Movable.speed[eid];
-    if (!path || path.length === 0) {
-      pathfindingCache.delete(eid);
-      removeComponent(world, PathFindingPath, eid);
-      return;
-    }
-
-    const currentPosition = new Vector({
-      x: Position.i[eid],
-      y: Position.j[eid],
-    });
-    const currentTileIndex = {
-      x: Math.floor(currentPosition.x),
-      y: Math.floor(currentPosition.y),
-    };
-
-    const currentTile = world.map.grid.getTile(currentTileIndex);
-    if (!currentTile) {
-      return;
-    }
-
-    const previousTile = path[PathFindingPath.currentIndex[eid] - 1] ?? currentTile;
-    const nextTile = path[PathFindingPath.currentIndex[eid]];
-    const movement = nextTile.position
-      .sub(currentPosition)
-      .normalize()
-      .multiplyScalar(world.time.deltaS * world.gameSpeed * speed);
-    const lerped = currentPosition.add(movement);
-    const distanceToTarget = lerped.distanceTo(nextTile.position);
-    Position.i[eid] = lerped.x;
-    Position.j[eid] = lerped.y;
-
-    Movable.direction[eid] = vectorToDirectionEnum(movement);
-
-    if (distanceToTarget < 0.01) {
-      Position.i[eid] = nextTile.position.x;
-      Position.j[eid] = nextTile.position.y;
-      PathFindingPath.currentIndex[eid] += 1;
-    }
-
-    if (PathFindingPath.currentIndex[eid] === path.length) {
-      Movable.direction[eid] = MovementDirection.none;
-      removeComponent(world, PathFindingPath, eid);
-      removeComponent(world, PathFindingTarget, eid);
-    }
-
-    //Position.i[eid] += Movable.speed[eid] * world.time.delta;
-    //Position.j[eid] += Movable.speed[eid] * world.time.delta;
-    //removeComponent(world, PathFindingTarget, eid);
-  });
-
-  return world;
-});
-
 export class Engine {
   map: GameMap;
   world: World;
+  systems: System<[], World>[];
 
-  constructor(private readonly renderSystems?: System<[], World>[]) {
-    this.map = new GameMap(40);
+  constructor(additionalSystems?: System<[], World>[]) {
+    this.map = new GameMap(400);
     this.world = createWorld();
     this.world.time = {
       deltaS: 0,
@@ -195,14 +135,20 @@ export class Engine {
     };
     this.world.gameSpeed = 1;
     this.world.map = this.map;
+    this.world.playerData = { 0: { goods: { gold: 0, iron: 0, stone: 0, wood: 0 } } };
+    this.world.alliances = [[0]];
+
+    this.systems = [timeSystem, createPathFindingSystem(this.map), ...(additionalSystems ?? [])];
+  }
+
+  addSystem(...sys: System<[], World>[]): void {
+    this.systems.push(...sys);
   }
 
   executeCommand(command: EngineCommand): void {}
 
   tick(): void {
-    timeSystem(this.world);
-    pathFindingSystem(this.world);
-    this.renderSystems?.forEach((sys) => sys(this.world));
+    this.systems.forEach((sys) => sys(this.world));
   }
 
   newEntity(components: Component[]): number {
